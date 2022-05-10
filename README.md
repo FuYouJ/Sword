@@ -1,5 +1,5 @@
 # sword
-Sword is an in-memory database with a single architecture
+Sword is 单机数据库内存数据库，基于java实现，希望它能像一把绝世好剑一样无坚不摧。
 * 列存储
 * 对象存储
 * 时序数据存储
