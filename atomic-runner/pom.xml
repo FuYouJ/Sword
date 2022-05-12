@@ -19,7 +19,6 @@
         <groupId>fuyouj</groupId>
         <artifactId>Sword</artifactId>
         <version>1.0-SNAPSHOT</version>
-        <relativePath>pom.xml</relativePath>
     </parent>
     <artifactId>atomic-runner</artifactId>
     <version>1.0-SNAPSHOT</version>
