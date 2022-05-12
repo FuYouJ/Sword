@@ -6,12 +6,24 @@
     <groupId>fuyouj</groupId>
     <artifactId>Sword</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <dependencies>
-        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.36</version>
-        </dependency>
-    </dependencies>
+    <packaging>pom</packaging>
+    <properties>
+        <java.version>11</java.version>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+    </properties>
+    <modules>
+        <module>scabbard</module>
+        <module>atomic-runner</module>
+    </modules>
+    <dependencyManagement>
+        <dependencies>
+            <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.7.36</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>
