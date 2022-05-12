@@ -38,7 +38,7 @@ public class MainThreadExecutorService implements ExecutorService {
             try {
                 return new InstantFuture<>(task.call());
             } catch (Exception e) {
-                return InstantFuture.cancelled();
+                return InstantFuture.cancelled(e);
             }
         });
     }
@@ -50,7 +50,8 @@ public class MainThreadExecutorService implements ExecutorService {
     }
 
     @Override
-    public <T> T invokeAny(final Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+    public <T> T invokeAny(final Collection<? extends Callable<T>> tasks) throws InterruptedException,
+            ExecutionException {
         if (Lists2.isNullOrEmpty(tasks)) {
             return null;
         }
@@ -95,20 +96,20 @@ public class MainThreadExecutorService implements ExecutorService {
     @Override
     public <T> Future<T> submit(final Callable<T> task) {
         if (task == null) {
-            return InstantFuture.cancelled();
+            return InstantFuture.nullTask();
         }
 
         try {
             return new InstantFuture<>(task.call());
         } catch (Exception e) {
-            return InstantFuture.cancelled();
+            return InstantFuture.cancelled(e);
         }
     }
 
     @Override
     public <T> Future<T> submit(final Runnable task, final T result) {
         if (task == null) {
-            return InstantFuture.cancelled();
+            return InstantFuture.nullTask();
         }
 
         task.run();
@@ -119,7 +120,7 @@ public class MainThreadExecutorService implements ExecutorService {
     @Override
     public Future<?> submit(final Runnable task) {
         if (task == null) {
-            return InstantFuture.cancelled();
+            return InstantFuture.nullTask();
         }
 
         task.run();

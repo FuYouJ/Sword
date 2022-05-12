@@ -75,7 +75,7 @@ public class Lists2 {
         return result;
     }
 
-    private static <T> List<T> newList() {
+    public static <T> List<T> newList() {
         return new ArrayList<>();
     }
 }

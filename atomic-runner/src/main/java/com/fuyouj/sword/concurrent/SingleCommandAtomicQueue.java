@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fuyouj.sword.concurrent.runner.AtomicResult;
+import com.fuyouj.sword.concurrent.runner.exception.RunnerException;
+import com.fuyouj.sword.scabard.Exceptions2;
 
 public class SingleCommandAtomicQueue<K> implements AtomicQueue<K> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SingleCommandAtomicQueue.class);
@@ -31,13 +33,15 @@ public class SingleCommandAtomicQueue<K> implements AtomicQueue<K> {
             try {
                 return AtomicResult.success(executorService.submit(cmd::run)
                         .get(AtomicRunnerConfiguration.DEFAULT.getCommandTimeoutSeconds(), TimeUnit.SECONDS));
-            } catch (ExecutionException e) {
+            } catch (RunnerException | ExecutionException e) {
                 e.printStackTrace();
-                LOGGER.error("Failed to run command with atomic key [{}] because it failed", cmd.atomicKey());
-                return AtomicResult.failed();
+                LOGGER.error("Failed to run command with atomic key [{}] because it failed due to [{}]",
+                        cmd.atomicKey(), Exceptions2.extractMessage(e));
+                return AtomicResult.failed(e.getCause());
             } catch (InterruptedException e) {
                 e.printStackTrace();
-                LOGGER.error("Failed to run command with atomic key [{}] because it has been canceled", cmd.atomicKey());
+                LOGGER.error("Failed to run command with atomic key [{}] because it has been canceled",
+                        cmd.atomicKey());
                 return AtomicResult.canceled();
             } catch (TimeoutException e) {
                 e.printStackTrace();
