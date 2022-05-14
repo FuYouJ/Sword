@@ -14,10 +14,13 @@
         <sl4j.version>1.7.35</sl4j.version>
         <junit.version>5.5.2</junit.version>
         <hamcrest.version>2.1</hamcrest.version>
+        <caffeine.version>3.0.6</caffeine.version>
+        <assertj.version>3.13.2</assertj.version>
     </properties>
     <modules>
         <module>scabbard</module>
         <module>atomic-runner</module>
+        <module>cache</module>
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -44,6 +47,19 @@
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest</artifactId>
                 <version>${hamcrest.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine -->
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.assertj/assertj-core -->
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

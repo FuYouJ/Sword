@@ -1,6 +1,7 @@
 package com.fuyouj.sword.scabard;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,8 +18,13 @@ public class Lists2 {
         return list == null || list.isEmpty();
     }
 
-    public static <T, R> List<R> map(final Collection<T> list, final Function<T, R> mapper) {
-        return doIndexMap(list, (item, index) -> mapper.apply(item), false, true);
+    @SafeVarargs
+    public static <T> List<T> items(final T... item) {
+        if (item == null || item.length == 0) {
+            return Lists2.newList();
+        }
+
+        return new ArrayList<>(Arrays.asList(item));
     }
 
     //    将Collection构建成一个Map，如果已经存在相同的key则覆盖前者
@@ -39,6 +45,14 @@ public class Lists2 {
         });
 
         return hashMap;
+    }
+
+    public static <T, R> List<R> map(final Collection<T> list, final Function<T, R> mapper) {
+        return doIndexMap(list, (item, index) -> mapper.apply(item), false, true);
+    }
+
+    public static <T> List<T> newList() {
+        return new ArrayList<>();
     }
 
     public static <T> List<T> staticEmpty() {
@@ -73,9 +87,5 @@ public class Lists2 {
         }
 
         return result;
-    }
-
-    public static <T> List<T> newList() {
-        return new ArrayList<>();
     }
 }
