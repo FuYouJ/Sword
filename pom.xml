@@ -16,11 +16,13 @@
         <hamcrest.version>2.1</hamcrest.version>
         <caffeine.version>3.0.6</caffeine.version>
         <assertj.version>3.13.2</assertj.version>
+        <json.version>2.10.0</json.version>
     </properties>
     <modules>
         <module>scabbard</module>
         <module>atomic-runner</module>
         <module>cache</module>
+        <module>database</module>
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -61,6 +63,18 @@
                 <artifactId>assertj-core</artifactId>
                 <version>${assertj.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${json.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${json.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
