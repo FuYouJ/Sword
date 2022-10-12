@@ -3,13 +3,15 @@ package com.fuyouj.sword.database.data.timeseries;
 import java.util.List;
 import java.util.Map;
 
+import com.fuyouj.sword.database.MemoryAware;
+
 /**
  * TimeSeriesDataStore 是时序数据持久化最外成的结构，所有的时序数据的管理均通过该接口实现；
  * 它的内部是一个介于Key的DataContainer hash结构，每个Key代表一个TimeSeriesContainer；
  * 而每一个TimeSeriesContainer内部又包含若干个TimeSeriesBucket，每个bucket代表一天的数据；
  * Container，Bucket内部均采用append only的方式上报数据，最新的数据append在后。
  */
-public interface TimeSeriesDataStreams extends AutoCloseable {
+public interface TimeSeriesDataStreamsStore extends AutoCloseable, MemoryAware {
     /**
      * Clear 清除该key所有的数据
      *

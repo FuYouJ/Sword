@@ -3,18 +3,19 @@ package com.fuyouj.sword.database.object;
 import java.lang.reflect.Field;
 import java.util.List;
 
-import com.thingworks.jarvis.persistent.exception.Exceptions;
-import com.thingworks.jarvis.persistent.exception.ItemIdNotSpecified;
-import com.thingworks.jarvis.persistent.exception.MultipleItemIdSpecified;
-import com.thingworks.jarvis.persistent.id.Generator;
-import com.thingworks.jarvis.persistent.id.Generators;
-import com.thingworks.jarvis.persistent.id.Id;
-import com.thingworks.jarvis.persistent.object.audit.AuditProvider;
+import com.fuyouj.sword.database.exception.Exceptions;
+import com.fuyouj.sword.database.exception.ItemIdNotSpecified;
+import com.fuyouj.sword.database.exception.MultipleItemIdSpecified;
+import com.fuyouj.sword.database.id.Generator;
+import com.fuyouj.sword.database.id.Generators;
+import com.fuyouj.sword.database.id.Id;
+import com.fuyouj.sword.database.object.audit.AuditProvider;
+import com.fuyouj.sword.scabard.Lists2;
 
-import net.thingworks.jarvis.utils.log.Loggable;
-import net.thingworks.jarvis.utils.type.Lists2;
+import lombok.extern.slf4j.Slf4j;
 
-public class ObjectStoreContext implements Loggable {
+@Slf4j
+public class ObjectStoreContext {
     private final ObjectUpdater<?> updater;
     private final Field idField;
     private final Generator<?> idGenerator;
@@ -34,7 +35,7 @@ public class ObjectStoreContext implements Loggable {
             this.latestId = nextId;
             idField.set(item, nextId);
         } catch (IllegalAccessException e) {
-            warn("Failed to assign new id for item of class [{}]", item.getClass());
+            log.warn("Failed to assign new id for item of class [{}]", item.getClass());
         }
     }
 
@@ -61,7 +62,7 @@ public class ObjectStoreContext implements Loggable {
     }
 
     private Field checkIdField(final Class<?> itemClass) {
-        final List<Field> idFields = Lists2.empty();
+        final List<Field> idFields = Lists2.newList();
         this.doCheckIdField(idFields, itemClass);
 
         if (idFields.isEmpty()) {

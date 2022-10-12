@@ -17,11 +17,10 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
-import com.thingworks.jarvis.persistent.object.annotation.DataObject;
-
-import net.thingworks.jarvis.utils.type.Lists2;
-import net.thingworks.jarvis.utils.type.Maps2;
-import net.thingworks.jarvis.utils.type.Objects2;
+import com.fuyouj.sword.database.object.annotation.DataObject;
+import com.fuyouj.sword.scabard.Lists2;
+import com.fuyouj.sword.scabard.Maps2;
+import com.fuyouj.sword.scabard.Objects2;
 
 public class DataObjectProcessor extends AbstractProcessor {
     private Filer filer;
@@ -35,7 +34,7 @@ public class DataObjectProcessor extends AbstractProcessor {
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
-        return SourceVersion.RELEASE_12;
+        return SourceVersion.RELEASE_11;
     }
 
     @Override
@@ -55,37 +54,36 @@ public class DataObjectProcessor extends AbstractProcessor {
                 final JavaFileObject sourceFile = filer.createSourceFile(
                         "com.thingworks.jarvis.persistent.object.AnnotationProcessedDataObjectMapperProvider");
 
-                final Writer writer = sourceFile.openWriter();
+                try (Writer writer = sourceFile.openWriter()) {
+                    writer.write("package com.thingworks.jarvis.persistent.object;\n");
+                    writer.write('\n');
+                    writer.write("import net.thingworks.jarvis.utils.type.ClassUtils;\n");
+                    writer.write("import java.util.HashMap;\n");
+                    writer.write("import java.util.Map;\n");
+                    writer.write("import com.thingworks.jarvis.persistent.object.DataObjectMapperProvider;\n");
+                    writer.write('\n');
+                    writer.write("public class AnnotationProcessedDataObjectMapperProvider "
+                            + "implements DataObjectMapperProvider {\n");
+                    writer.write("  private static final Map<String, Class<?>> mapper;\n");
+                    writer.write("  static {\n");
 
-                writer.write("package com.thingworks.jarvis.persistent.object;\n");
-                writer.write('\n');
-                writer.write("import net.thingworks.jarvis.utils.type.ClassUtils;\n");
-                writer.write("import java.util.HashMap;\n");
-                writer.write("import java.util.Map;\n");
-                writer.write("import com.thingworks.jarvis.persistent.object.DataObjectMapperProvider;\n");
-                writer.write('\n');
-                writer.write("public class AnnotationProcessedDataObjectMapperProvider "
-                        + "implements DataObjectMapperProvider {\n");
-                writer.write("  private static final Map<String, Class<?>> mapper;\n");
-                writer.write("  static {\n");
+                    writer.write("    mapper = new HashMap<>();\n");
+                    for (Map.Entry<String, String> entry : collectionNameAndClassMapper.entrySet()) {
+                        writer.write(String.format(
+                                "    mapper.put(\"%s\", ClassUtils.getClass(\"%s\"));\n", entry.getKey(), entry.getValue())
+                        );
+                    }
+                    writer.write("  }\n");
 
-                writer.write("    mapper = new HashMap<>();\n");
-                for (Map.Entry<String, String> entry : collectionNameAndClassMapper.entrySet()) {
-                    writer.write(String.format(
-                            "    mapper.put(\"%s\", ClassUtils.getClass(\"%s\"));\n", entry.getKey(), entry.getValue())
-                    );
+                    writer.write('\n');
+
+                    writer.write("  @Override\n");
+                    writer.write("  public Map<String, Class<?>> getCollectionMapper() {\n");
+                    writer.write("    return mapper;\n");
+                    writer.write("  }\n");
+                    writer.write("}");
+                    writer.flush();
                 }
-                writer.write("  }\n");
-
-                writer.write('\n');
-
-                writer.write("  @Override\n");
-                writer.write("  public Map<String, Class<?>> getCollectionMapper() {\n");
-                writer.write("    return mapper;\n");
-                writer.write("  }\n");
-                writer.write("}");
-                writer.flush();
-                writer.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -134,5 +132,4 @@ public class DataObjectProcessor extends AbstractProcessor {
                     ));
         }
     }
-
 }

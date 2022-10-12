@@ -1,6 +1,9 @@
 package com.fuyouj.sword.database.object;
 
 import java.util.Map;
+import java.util.Set;
+
+import com.fuyouj.sword.scabard.Maps2;
 
 public interface DataObjectMapperProvider {
     Map<String, Class<?>> getAllAliasMapper();
@@ -16,4 +19,8 @@ public interface DataObjectMapperProvider {
     }
 
     Map<String, Class<?>> getDataObjectMapper();
+
+    default Map<Class<?>, Set<Class<?>>> getSubClasses() {
+        return Maps2.staticEmpty();
+    }
 }

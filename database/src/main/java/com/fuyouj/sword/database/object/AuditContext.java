@@ -24,7 +24,7 @@ import com.fuyouj.sword.scabard.Objects2;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-class AuditContext {
+class AuditContext{
     private static final Map<Class<?>, AuditTimeConverter<?>> MAPPED_CONVERTERS = Maps2.of(
             String.class, (AuditTimeConverter<String>) DateTimes2::format,
             Long.class, (AuditTimeConverter<Long>) DateTimes2::toMills,

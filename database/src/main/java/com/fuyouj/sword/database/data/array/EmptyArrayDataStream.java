@@ -1,9 +1,11 @@
 package com.fuyouj.sword.database.data.array;
 
+import java.util.Iterator;
 import java.util.List;
 
 import com.fuyouj.sword.database.data.QueryOption;
-import com.fuyouj.sword.scabard.NotImplementedYet;
+import com.fuyouj.sword.database.utils.Iterators;
+import com.fuyouj.sword.scabard.Lists2;
 
 public class EmptyArrayDataStream<Value> implements ArrayDataStream<Value> {
     public static final EmptyArrayDataStream EMPTY = new EmptyArrayDataStream();
@@ -13,8 +15,18 @@ public class EmptyArrayDataStream<Value> implements ArrayDataStream<Value> {
     }
 
     @Override
-    public int add(final Value data) {
+    public long add(final Value data) {
         return -1;
+    }
+
+    @Override
+    public List<Long> addAll(final List<Value> values) {
+        return Lists2.staticEmpty();
+    }
+
+    @Override
+    public void addHook(final ArrayDataStreamHook<Value> hook) {
+
     }
 
     @Override
@@ -38,14 +50,13 @@ public class EmptyArrayDataStream<Value> implements ArrayDataStream<Value> {
     }
 
     @Override
-    public boolean fillBufferHolyWithNullTo(final int index) {
-        return false;
+    public void deleteByIndex(final long index) {
+
     }
 
     @Override
-    @NotImplementedYet
-    public List<Value> getAll() {
-        return null;
+    public boolean fillBufferHolyWithNullTo(final long index) {
+        return false;
     }
 
     @Override
@@ -54,23 +65,13 @@ public class EmptyArrayDataStream<Value> implements ArrayDataStream<Value> {
     }
 
     @Override
-    public Value getByIndex(final int index) {
-        return null;
+    public IndexedValue<Value> getByIndex(final long index) {
+        return IndexedValue.empty();
     }
 
     @Override
-    public List<Value> getByIndexes(final List<Integer> indexes) {
-        return null;
-    }
-
-    @Override
-    public List<Value> getByIndexRange(final int from, final int to) {
-        return null;
-    }
-
-    @Override
-    public Class getDataType() {
-        return null;
+    public Class<?> getDataType() {
+        return Object.class;
     }
 
     @Override
@@ -79,18 +80,43 @@ public class EmptyArrayDataStream<Value> implements ArrayDataStream<Value> {
     }
 
     @Override
-    public boolean isEmpty(final int index) {
+    public boolean isEmpty(final long index) {
         return true;
     }
 
     @Override
-    public int latestIndex() {
-        return -1;
+    public Iterator<IndexedValue<Value>> iterator(final IndexStream indexStream) {
+        return Iterators.empty();
     }
 
     @Override
-    public void put(final List<Value> values) {
+    public Iterator<IndexedValue<Value>> iterator(final int skip, final int limit) {
+        return Iterators.empty();
+    }
 
+    @Override
+    public Iterator<IndexedValue<Value>> iterator() {
+        return Iterators.empty();
+    }
+
+    @Override
+    public Iterator<IndexedValue<Value>> iteratorBackward(final long start, final int limit) {
+        return Iterators.empty();
+    }
+
+    @Override
+    public Iterator<IndexedValue<Value>> iteratorForward(final long start, final int limit) {
+        return Iterators.empty();
+    }
+
+    @Override
+    public Iterator<IndexedValue<Value>> iteratorWithDeletes() {
+        return Iterators.empty();
+    }
+
+    @Override
+    public long latestIndex() {
+        return -1;
     }
 
     @Override
@@ -99,12 +125,28 @@ public class EmptyArrayDataStream<Value> implements ArrayDataStream<Value> {
     }
 
     @Override
-    public void removeByIndex(final int index) {
+    public void removeHook(final ArrayDataStreamHook<Value> hook) {
 
     }
 
     @Override
-    public boolean setByIndex(final int index, final Value text) {
+    public boolean replaceAll(final IndexedValues<Value> values) {
         return false;
     }
+
+    @Override
+    public List<Long> replaceAll(final List<Value> values) {
+        return Lists2.staticEmpty();
+    }
+
+    @Override
+    public Iterator<IndexedValue<Value>> reverseIterator() {
+        return Iterators.empty();
+    }
+
+    @Override
+    public boolean setByIndex(final long index, final Value text) {
+        return false;
+    }
+
 }

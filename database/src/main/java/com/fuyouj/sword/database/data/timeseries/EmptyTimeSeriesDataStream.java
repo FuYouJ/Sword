@@ -2,7 +2,7 @@ package com.fuyouj.sword.database.data.timeseries;
 
 import java.util.List;
 
-import net.thingworks.jarvis.utils.type.Lists2;
+import com.fuyouj.sword.scabard.Lists2;
 
 public final class EmptyTimeSeriesDataStream<Value> implements TimeSeriesDataStream<Value> {
     public static final EmptyTimeSeriesDataStream EMPTY = new EmptyTimeSeriesDataStream();

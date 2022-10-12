@@ -1,34 +1,58 @@
 package com.fuyouj.sword.database.data.array;
 
+import java.util.Iterator;
 import java.util.List;
 
 import com.fuyouj.sword.database.data.DataStream;
 import com.fuyouj.sword.database.data.QueryOption;
 
-public interface ArrayDataStream<Value> extends DataStream {
-    int add(Value data);
+public interface ArrayDataStream<Value> extends DataStream, Iterable<IndexedValue<Value>> {
+    long add(Value data);
+
+    List<Long> addAll(List<Value> values);
+
+    void addHook(ArrayDataStreamHook<Value> hook);
 
     int bufferCount();
 
-    boolean fillBufferHolyWithNullTo(int index);
+    /**
+     * 删除index对应的格子
+     *
+     * @param index 格子的index
+     */
+    void deleteByIndex(long index);
 
-    List<Value> getAll();
+    boolean fillBufferHolyWithNullTo(long index);
 
-    Value getByIndex(int index);
+    IndexedValue<Value> getByIndex(long index);
 
-    List<Value> getByIndexRange(int from, int to);
+    boolean isEmpty(long index);
 
-    List<Value> getByIndexes(List<Integer> indexes);
+    default boolean isPrimaryKey() {
+        return false;
+    }
 
-    boolean isEmpty(int index);
+    Iterator<IndexedValue<Value>> iterator(IndexStream indexStream);
 
-    int latestIndex();
+    Iterator<IndexedValue<Value>> iterator(int skip, int limit);
 
-    void put(List<Value> values);
+    Iterator<IndexedValue<Value>> iteratorBackward(long start, int limit);
+
+    Iterator<IndexedValue<Value>> iteratorForward(long start, int limit);
+
+    Iterator<IndexedValue<Value>> iteratorWithDeletes();
+
+    long latestIndex();
 
     QueryResult<Value> query(QueryOption<Value> query);
 
-    void removeByIndex(int index);
+    void removeHook(ArrayDataStreamHook<Value> hook);
 
-    boolean setByIndex(int index, Value text);
+    boolean replaceAll(IndexedValues<Value> values);
+
+    List<Long> replaceAll(List<Value> values);
+
+    Iterator<IndexedValue<Value>> reverseIterator();
+
+    boolean setByIndex(long index, Value text);
 }

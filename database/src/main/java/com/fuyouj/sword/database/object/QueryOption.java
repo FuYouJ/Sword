@@ -1,18 +1,25 @@
 package com.fuyouj.sword.database.object;
 
-import com.thingworks.jarvis.persistent.exception.Exceptions;
-
-import net.thingworks.jarvis.utils.type.Asserts2;
+import com.fuyouj.sword.database.exception.Exceptions;
+import com.fuyouj.sword.scabard.Asserts;
 
 public class QueryOption<T> {
-    private Matcher<T> matcher;
-    private Sorter<T> sorter;
+    private static final QueryOption ALL = QueryOption.builder().match(i -> true).build();
+    private final Matcher<T> matcher;
+    private final Sorter<T> sorter;
     private long limit = -1;
+    private long skip = -1;
 
-    private QueryOption(final Matcher<T> matcher, final Sorter<T> sorter, final long limit) {
+    private QueryOption(final Matcher<T> matcher, final Sorter<T> sorter, final long limit, final long skip) {
         this.matcher = matcher;
         this.sorter = sorter;
         this.limit = limit;
+        this.skip = skip;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> QueryOption<T> all() {
+        return (QueryOption<T>) ALL;
     }
 
     public static <T> QueryOptionBuilder<T> builder() {
@@ -31,8 +38,16 @@ public class QueryOption<T> {
         return this.limit;
     }
 
+    public long getSkip() {
+        return this.skip;
+    }
+
     public boolean hasLimit() {
         return this.limit > 0;
+    }
+
+    public boolean hasSkip() {
+        return this.skip > 0;
     }
 
     public boolean hasSorter() {
@@ -55,10 +70,11 @@ public class QueryOption<T> {
         private Matcher<T> matcher;
         private Sorter<T> sorter;
         private long limit = -1;
+        private long skip = -1;
 
         public QueryOption<T> build() {
-            Asserts2.hasArg(matcher, "QueryOption matcher must NOT be null");
-            return new QueryOption<>(matcher, sorter, limit);
+            Asserts.hasArg(matcher, "QueryOption matcher must NOT be null");
+            return new QueryOption<>(matcher, sorter, limit, skip);
         }
 
         public QueryOptionBuilder<T> limit(final long limit) {
@@ -72,6 +88,15 @@ public class QueryOption<T> {
 
         public QueryOptionBuilder<T> match(final Matcher<T> matcher) {
             this.matcher = matcher;
+            return this;
+        }
+
+        public QueryOptionBuilder<T> skip(final long skip) {
+            if (skip < 0) {
+                throw Exceptions.invalidQueryOption("skip must greater than 0");
+            }
+
+            this.skip = skip;
             return this;
         }
 

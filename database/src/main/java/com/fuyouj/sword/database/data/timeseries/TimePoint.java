@@ -2,13 +2,22 @@ package com.fuyouj.sword.database.data.timeseries;
 
 import java.util.Objects;
 
-public final class TimePoint<Value> {
+public final class TimePoint<Value> implements Comparable<TimePoint> {
     private final long timestamp;
     private final Value value;
 
     public TimePoint(final long timestamp, final Value value) {
         this.timestamp = timestamp;
         this.value = value;
+    }
+
+    @Override
+    public int compareTo(final TimePoint other) {
+        if (other == null) {
+            return 0;
+        }
+
+        return Long.compare(this.timestamp, other.timestamp);
     }
 
     @Override

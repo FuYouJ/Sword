@@ -14,6 +14,58 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class Lists2 {
+    /**
+     * 将元素和若干List连接成一个List
+     */
+    @SafeVarargs
+    public static <T> List<T> appendHeader(final T item, final Collection<T>... lists) {
+        if (item == null) {
+            return concat(lists);
+        }
+
+        return concat(items(item), concat(lists));
+    }
+
+    public static <T> List<T> appendTail(final T item, final Collection<T>... lists) {
+        List<T> concat = concat(lists);
+
+        if (item == null) {
+            return concat;
+        }
+
+        concat.add(item);
+
+        return concat;
+    }
+
+    public static <T> List<T> combine(final List<T> left,
+                                      final List<T> right,
+                                      final BiFunction<T, T, T> mapper) {
+        Asserts.hasArg(mapper, "Mapper must NOT be null for Lists2.combine");
+
+        List<T> result = Lists2.staticEmpty();
+
+        if (left == null && right == null) {
+            return result;
+        }
+
+        if (left == null) {
+            return right;
+        }
+
+        if (right == null) {
+            return left;
+        }
+
+        for (T leftItem : left) {
+            for (T rightItem : right) {
+                result.add(mapper.apply(leftItem, rightItem));
+            }
+        }
+
+        return result;
+    }
+
     public static <T> List<T> concat(final Collection<? extends T>... lists) {
         int totalSize = Stream.of(lists).mapToInt(coll -> {
             if (coll != null) {
@@ -155,6 +207,14 @@ public class Lists2 {
 
     public static <T> List<T> newList() {
         return new ArrayList<>();
+    }
+
+    public static <T> int size(final Collection<T> items) {
+        if (items == null) {
+            return 0;
+        }
+
+        return items.size();
     }
 
     public static <T> List<T> staticEmpty() {

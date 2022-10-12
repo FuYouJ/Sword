@@ -2,7 +2,9 @@ package com.fuyouj.sword.database.object;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * ObjectStore，对象持久。对象的特点具有灵活的schema，该持久层主要的设计目的是为持久化对象设计的，具有以下几个特征
@@ -14,6 +16,10 @@ import java.util.Optional;
  * 6. 理论占总体内存量极低
  */
 public interface ObjectStore {
+    Map<String, Object> getMemorySummaries();
+
+    Set<String> collectionNames();
+
     <T> int count(Matcher<T> option, Class<T> tClass);
 
     <T> int count(Matcher<T> option, String collectionName);
@@ -68,13 +74,21 @@ public interface ObjectStore {
 
     <T> boolean existsById(Object id, Class<T> tClass);
 
+    <T> boolean existsById(Object id, Matcher<T> option, Class<T> tClass);
+
     <T> boolean existsById(Object id, String collectionName);
+
+    <T> boolean existsById(Object id, Matcher<T> option, String collectionName);
 
     <T> List<T> find(QueryOption<T> queryOption, Class<T> tClass);
 
     <T> List<T> find(QueryOption<T> queryOption, String collectionName);
 
+    <T> T findAndModify(Object id, Matcher<T> matcher, Updater<T> updater, Class<T> tClass);
+
     <T> Optional<T> findById(Object id, Class<T> tClass);
+
+    <T> List<T> findByIds(Set<Object> ids, Class<T> tClass);
 
     <T> Optional<T> findById(Object id, String collectionName);
 
@@ -102,4 +116,8 @@ public interface ObjectStore {
     <T> T updateOne(Matcher<T> option, Updater<T> updater, Class<T> tClass);
 
     <T> T updateOne(Matcher<T> option, Updater<T> updater, String collectionName);
+
+    <T> boolean updateOneByObject(Matcher<T> matcher, T item, Class<T> tClass);
+
+    <T> boolean updateOneByObject(Matcher<T> matcher, T item, String collectionName);
 }

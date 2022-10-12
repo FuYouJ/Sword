@@ -66,11 +66,6 @@ public class EmptyTimeSeriesBucket<Value> implements TimeSeriesBucket<Value> {
     }
 
     @Override
-    public TimePoint<Value> getValueBeforeTimeExclusively(final int time) {
-        return null;
-    }
-
-    @Override
     public TimePoint<Value> getValueByTime(final int time) {
         return null;
     }

@@ -7,13 +7,15 @@ import com.fuyouj.sword.database.data.DataStream;
 public interface TimeSeriesBucket<Value> extends DataStream {
     List<TimePoint<Value>> asTimePoints();
 
+    default double effectiveMemoryDensity() {
+        return 1.0;
+    }
+
     int getDay();
 
     TimePoint<Value> getLatest();
 
     TimePoint<Value> getLatestBefore(int time);
-
-    TimePoint<Value> getValueBeforeTimeExclusively(int time);
 
     TimePoint<Value> getValueByTime(int time);
 
@@ -29,3 +31,4 @@ public interface TimeSeriesBucket<Value> extends DataStream {
 
     boolean save(int time, Value value);
 }
+

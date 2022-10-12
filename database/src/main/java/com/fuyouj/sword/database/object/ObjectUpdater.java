@@ -5,9 +5,8 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.thingworks.jarvis.persistent.exception.Exceptions;
-
-import net.thingworks.jarvis.utils.type.Asserts2;
+import com.fuyouj.sword.database.exception.Exceptions;
+import com.fuyouj.sword.scabard.Asserts;
 
 public class ObjectUpdater<T> {
     private final Class<T> tClass;
@@ -33,7 +32,7 @@ public class ObjectUpdater<T> {
     }
 
     private void checkUpdatable(final Object obj) {
-        Asserts2.hasArg(obj, "object must NOT be null to update");
+        Asserts.hasArg(obj, "object must NOT be null to update");
         if (!tClass.isAssignableFrom(obj.getClass())) {
             throw Exceptions.objectMustAssignableToBeAbleToUpdate();
         }
