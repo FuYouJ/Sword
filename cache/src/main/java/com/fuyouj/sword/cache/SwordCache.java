@@ -1,10 +1,11 @@
 package com.fuyouj.sword.cache;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-public interface SwordCache<K,V>    {
+public interface SwordCache<K, V> {
     void cleanUp();
 
     long estimatedSize();
@@ -20,6 +21,8 @@ public interface SwordCache<K,V>    {
     void invalidateAll(Iterable<? extends K> keys);
 
     void invalidateAll();
+
+    Set<K> keys();
 
     void put(K key, V value);
 

@@ -2,17 +2,17 @@ package com.fuyouj.sword.cache;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import com.fuyouj.sword.concurrent.runner.AtomicResult;
 import com.fuyouj.sword.concurrent.runner.AtomicRunner;
 import com.fuyouj.sword.concurrent.runner.AtomicRunnerFactory;
 import com.github.benmanes.caffeine.cache.Cache;
 
-public class CaffeineSwordCache<K,V> implements SwordCache<K,V> {
+public class CaffeineSwordCache<K, V> implements SwordCache<K, V> {
     private static final AtomicRunner ATOMIC_RUNNER = AtomicRunnerFactory.noneThreadPoolSingleCommandRunner();
-    private final Cache<K,Object> caffeineCache;
+    private final Cache<K, Object> caffeineCache;
 
     public CaffeineSwordCache(final Cache<K, Object> caffeineCache) {
         this.caffeineCache = caffeineCache;
@@ -30,55 +30,56 @@ public class CaffeineSwordCache<K,V> implements SwordCache<K,V> {
 
     @Override
     public V get(final K key, final Function<? super K, ? extends V> mappingFunction) {
-        AtomicResult<V> atomicResult = ATOMIC_RUNNER.run(key,()->{
+        final Object result = ATOMIC_RUNNER.syncRun(getAtomicKey(key), () -> {
+            Object cachedData = caffeineCache.getIfPresent(key);
 
-            Object cacheData = caffeineCache.getIfPresent(key);
-
-            if(cacheData == null){
-                //like java hashmap computeIfAbsent
-                //if it doesn't exist,then put and return  it
-                return (V)caffeineCache.get(key,mappingFunction);
+            if (cachedData == null) {
+                return caffeineCache.get(key, mappingFunction);
             }
 
-            if (cacheData instanceof TimedCacheData) {
-                if (((TimedCacheData) cacheData).hasExpired()) {
-                    //if it is expired,then put and return  it
-                    //but the value is still there
-                    //(V)caffeineCache.get(key,mappingFunction)
+            if (cachedData instanceof TimedCacheData) {
+                if (((TimedCacheData<V>) cachedData).hasExpired()) {
                     V mappedData = mappingFunction.apply(key);
                     caffeineCache.put(key, mappedData);
                     return mappedData;
                 }
             }
-            return (V)cacheData;
+
+            return cachedData;
         });
-        if (atomicResult.isSuccess()) {
-            return atomicResult.getResult();
+
+        if (result == null) {
+            return null;
         }
-        return null;
+
+        return (V) result;
     }
 
     @Override
     public Map<K, V> getAllPresent(final Iterable<? extends K> keys) {
-        Map<K,V> res = new HashMap<>();
-        AtomicResult<Object> atomicResult;
+        Map<K, V> result = new HashMap<>();
+
         for (K key : keys) {
-            atomicResult = ATOMIC_RUNNER.run(key,()->{
-                Object cacheData = caffeineCache.getIfPresent(key);
-                if(cacheData == null){
+            Object atomicResult = ATOMIC_RUNNER.syncRun(getAtomicKey(key), () -> {
+                Object cachedData = caffeineCache.getIfPresent(key);
+
+                if (cachedData == null) {
                     return null;
                 }
-                if (cacheData instanceof TimedCacheData) {
-                    return ((TimedCacheData<?>) cacheData).getIfNotExpired();
+
+                if (cachedData instanceof TimedCacheData) {
+                    return ((TimedCacheData<?>) cachedData).getIfNotExpired();
                 }
-                return cacheData;
+
+                return cachedData;
             });
 
-            if (atomicResult.isSuccess() && atomicResult.hasEmptyResult() == false) {
-                res.put(key, (V) atomicResult.getResult());
+            if (atomicResult != null) {
+                result.put(key, (V) atomicResult);
             }
         }
-        return res;
+
+        return result;
     }
 
     @Override
@@ -86,14 +87,18 @@ public class CaffeineSwordCache<K,V> implements SwordCache<K,V> {
         if (key == null) {
             return null;
         }
-        Object cacheData = caffeineCache.getIfPresent(key);
-        if (cacheData == null) {
+
+        Object cachedData = caffeineCache.getIfPresent(key);
+
+        if (cachedData == null) {
             return null;
         }
-        if (cacheData instanceof TimedCacheData) {
-            return (V) ((TimedCacheData<?>) cacheData).getIfNotExpired();
+
+        if (cachedData instanceof TimedCacheData) {
+            return (V) ((TimedCacheData<?>) cachedData).getIfNotExpired();
         }
-        return (V) cacheData;
+
+        return (V) cachedData;
     }
 
     @Override
@@ -112,8 +117,13 @@ public class CaffeineSwordCache<K,V> implements SwordCache<K,V> {
     }
 
     @Override
+    public Set<K> keys() {
+        return caffeineCache.asMap().keySet();
+    }
+
+    @Override
     public void put(final K key, final V value) {
-        if (key == null || value == null) {
+        if (value == null || key == null) {
             return;
         }
         caffeineCache.put(key, value);
@@ -121,7 +131,7 @@ public class CaffeineSwordCache<K,V> implements SwordCache<K,V> {
 
     @Override
     public void put(final K key, final V value, final long timeout, final TimeUnit unit) {
-        caffeineCache.put(key, new TimedCacheData<V>(value, (int) unit.toMillis(timeout)));
+        caffeineCache.put(key, new TimedCacheData<V>(value, unit.toMillis(timeout)));
     }
 
     @Override
@@ -131,27 +141,29 @@ public class CaffeineSwordCache<K,V> implements SwordCache<K,V> {
 
     @Override
     public boolean putIfAbsent(final K key, final V value, final long timeout, final TimeUnit unit) {
-        AtomicResult<Boolean> atomicResult = ATOMIC_RUNNER.run(key, () -> {
+        return (boolean) ATOMIC_RUNNER.syncRun(getAtomicKey(key), () -> {
             Object cachedData = caffeineCache.getIfPresent(key);
 
             if (cachedData == null
                     || (cachedData instanceof TimedCacheData && ((TimedCacheData<?>) cachedData).hasExpired())) {
-                caffeineCache.put(key, new TimedCacheData<V>(value, (int) unit.toMillis(timeout)));
+                caffeineCache.put(key, new TimedCacheData<V>(value, unit.toMillis(timeout)));
                 return true;
             }
 
             return false;
         });
-
-        if (atomicResult.isSuccess() && !atomicResult.hasEmptyResult()) {
-            return atomicResult.getResult();
-        }
-
-        return false;
     }
 
     @Override
     public SwordCacheStats stats() {
         return SwordCacheStats.of(caffeineCache.stats());
+    }
+
+    private K getAtomicKey(final K key) {
+        if (key instanceof String) {
+            return (K) ("Cache:" + key);
+        }
+
+        return key;
     }
 }

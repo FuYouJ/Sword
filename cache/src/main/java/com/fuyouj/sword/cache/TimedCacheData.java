@@ -2,10 +2,10 @@ package com.fuyouj.sword.cache;
 
 final class TimedCacheData<T> {
     private final long unixTimestampAdded;
-    private final int expiryMillis;
+    private final long expiryMillis;
     private final T cacheData;
 
-    TimedCacheData(final T cacheData, final int expiryMillis) {
+    TimedCacheData(final T cacheData, final long expiryMillis) {
         this.unixTimestampAdded = System.currentTimeMillis();
         this.expiryMillis = expiryMillis;
         this.cacheData = cacheData;
