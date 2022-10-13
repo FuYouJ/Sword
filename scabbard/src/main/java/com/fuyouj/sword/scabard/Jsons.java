@@ -99,6 +99,28 @@ public abstract class Jsons {
         return toJavaObject(jsonString, type, getDefaultObjectMapper());
     }
 
+    public static String toJsonString(final Object obj,
+                                      final ObjectMapper objectMapper,
+                                      final boolean throwException) throws JsonProcessingException {
+        if (obj == null) {
+            return null;
+        }
+
+        try {
+            return objectMapper.writeValueAsString(obj);
+        } catch (JsonProcessingException e) {
+            if (throwException) {
+                throw e;
+            } else {
+                return obj.toString();
+            }
+        }
+    }
+
+    public static String toJsonString(final Object obj, final boolean throwException) throws JsonProcessingException {
+        return toJsonString(obj, Jsons.getDefaultObjectMapper(), throwException);
+    }
+
     public static String toJsonString(final Object obj, final ObjectMapper objectMapper) {
         if (obj == null) {
             return null;

@@ -17,12 +17,15 @@
         <caffeine.version>3.0.6</caffeine.version>
         <assertj.version>3.13.2</assertj.version>
         <json.version>2.10.0</json.version>
+        <arrow.Version>9.0.0</arrow.Version>
+        <reflection.version>0.10.2</reflection.version>
     </properties>
     <modules>
         <module>scabbard</module>
         <module>atomic-runner</module>
         <module>cache</module>
         <module>database</module>
+        <module>database-disk</module>
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -76,6 +79,43 @@
                 <artifactId>jackson-core</artifactId>
                 <version>${json.version}</version>
             </dependency>
+
+            <!-- https://mvnrepository.com/artifact/org.apache.arrow/arrow-memory -->
+            <dependency>
+                <groupId>org.apache.arrow</groupId>
+                <artifactId>arrow-memory</artifactId>
+                <version>${arrow.Version}</version>
+                <type>pom</type>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/org.apache.arrow/arrow-memory-core -->
+            <dependency>
+                <groupId>org.apache.arrow</groupId>
+                <artifactId>arrow-memory-core</artifactId>
+                <version>${arrow.Version}</version>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.arrow</groupId>
+                <artifactId>arrow-memory-netty</artifactId>
+                <version>${arrow.Version}</version>
+                <type>pom</type>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.arrow/arrow-vector -->
+            <dependency>
+                <groupId>org.apache.arrow</groupId>
+                <artifactId>arrow-vector</artifactId>
+                <version>${arrow.Version}</version>
+                <type>pom</type>
+            </dependency>
+
+            <!-- https://mvnrepository.com/artifact/org.reflections/reflections -->
+            <dependency>
+                <groupId>org.reflections</groupId>
+                <artifactId>reflections</artifactId>
+                <version>${reflection.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 </project>
