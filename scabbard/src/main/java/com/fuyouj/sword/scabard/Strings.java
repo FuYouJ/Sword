@@ -20,6 +20,14 @@ public class Strings {
     private Strings() {
     }
 
+    public static boolean equalIgnoreCase(final String target, final String item) {
+        if (target == null || item == null) {
+            return false;
+        }
+
+        return target.equalsIgnoreCase(item);
+    }
+
     public static int containsTimes(final String name, final char aChar) {
         if (name == null) {
             return 0;

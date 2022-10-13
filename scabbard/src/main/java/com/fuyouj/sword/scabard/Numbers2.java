@@ -18,6 +18,9 @@ public class Numbers2 {
         return toDouble(obj, DEFAULT_DOUBLE);
     }
 
+    public static Optional<Long> tryParseLong(final Object obj) {
+        return ofNullable(toDouble(obj, null)).map(Double::longValue);
+    }
     public static Double toDouble(final Object obj, final Double defaultValue) {
         if (obj == null) {
             return defaultValue;

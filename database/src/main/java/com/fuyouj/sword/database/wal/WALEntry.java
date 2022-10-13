@@ -5,10 +5,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import com.thingworks.jarvis.concurrent.utils.Exceptions2;
-import com.thingworks.jarvis.persistent.utils.Bytes;
-import com.thingworks.jarvis.persistent.wal.exception.FailedToAppendWal;
-import com.thingworks.jarvis.persistent.wal.exception.UnableToAccessWalFile;
+import com.fuyouj.sword.database.utils.Bytes;
+import com.fuyouj.sword.database.wal.exception.FailedToAppendWal;
+import com.fuyouj.sword.scabard.Exceptions2;
 
 /**
  * 表示一条预写日志记录
@@ -29,22 +28,22 @@ class WALEntry {
             + CRC_BYTE_LENGTH
             + DATA_LENGTH_BYTE_LENGTH;
     /**
-     * 预写日志的唯一自增序号
-     */
-    long entryIndex = -1;
-    /**
      * 该日志的类型，最大可表示的类型有127种
      */
-    private byte entryType;
+    private final byte entryType;
     /**
      * 数据的Crc校验码，用于验证数据是否有损坏，如果损坏则该条记录已经后续的所有记录均失效
      */
-    private Integer crc;
+    private final Integer crc;
     /**
      *
      */
-    private int size;
-    private byte[] data;
+    private final int size;
+    private final byte[] data;
+    /**
+     * 预写日志的唯一自增序号
+     */
+    long entryIndex = -1;
 
     WALEntry(final long entryIndex,
              final byte entryType,
@@ -71,22 +70,18 @@ class WALEntry {
     }
 
     boolean isValid() {
-        return Bytes.crc32(data) == this.crc;
+        return Bytes.crc32(data) == this.crc && EntryTypeFactory.isValidEntryType(this.entryType);
     }
 
-    static WALEntry read(final DataInput dataInput) {
-        try {
-            final long entryIndex = dataInput.readLong();
-            final byte entryType = dataInput.readByte();
-            final int crc = dataInput.readInt();
-            final int size = dataInput.readInt();
-            final byte[] data = new byte[size];
-            dataInput.readFully(data);
+    static WALEntry read(final DataInput dataInput) throws IOException {
+        final long entryIndex = dataInput.readLong();
+        final byte entryType = dataInput.readByte();
+        final int crc = dataInput.readInt();
+        final int size = dataInput.readInt();
+        final byte[] data = new byte[size];
+        dataInput.readFully(data);
 
-            return new WALEntry(entryIndex, entryType, crc, size, data);
-        } catch (IOException e) {
-            throw new UnableToAccessWalFile(Exceptions2.extractMessage(e));
-        }
+        return new WALEntry(entryIndex, entryType, crc, size, data);
     }
 
     byte[] toBytes() {

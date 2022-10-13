@@ -6,30 +6,30 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fuyouj.sword.database.exception.JsonDeserializeException;
 import com.fuyouj.sword.database.object.DataObjectMapperProvider;
-import com.fuyouj.sword.database.utils.JacksonFactory;
-import com.fuyouj.sword.database.wal.Command;
 import com.fuyouj.sword.scabard.Exceptions2;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class JsonSerializerDeserializer implements Serializer<Command>, Deserializer {
-    private static final Pattern TYPE_EXTRACTOR_PATTERN = Pattern.compile("^\\{\"@type\":\"([^\"]+)\".+");
-    private static final String TYPE_ALIAS_KEY = "@type";
+public class JsonSerializerDeserializer implements Serializer, Deserializer {
+    private static final Pattern TYPE_EXTRACTOR_PATTERN = Pattern.compile("^\\{\"@t\" *: *\"([^\"]+)\".+");
+    private static final String TYPE_ALIAS_KEY = "@t";
     private final DataObjectMapperProvider objectMapperProvider;
     private final ObjectMapper objectMapper;
 
-    public JsonSerializerDeserializer(final DataObjectMapperProvider objectMapperProvider) {
+    public JsonSerializerDeserializer(final DataObjectMapperProvider objectMapperProvider,
+                                      final ObjectMapper objectMapper) {
         this.objectMapperProvider = objectMapperProvider;
-        this.objectMapper = JacksonFactory.createDefault();
+        this.objectMapper = objectMapper;
     }
 
     @Override
-    public <T> T deserialize(final byte[] serialized, final Class<T> tClass) {
+    public <T> T deserialize(final byte[] serialized, final Class<T> tClass, final boolean throwError) {
         String source = new String(serialized);
 
-        Class<?> classToDeserializeTo = this.selectClassToDeserializeTo(serialized, tClass);
+        Class<?> classToDeserializeTo = this.selectClassToDeserializeTo(source, tClass);
 
         try {
             final Object obj = objectMapper.readValue(source, classToDeserializeTo);
@@ -40,18 +40,41 @@ public class JsonSerializerDeserializer implements Serializer<Command>, Deserial
 
             return null;
         } catch (JsonProcessingException e) {
-            log.warn("failed to deserialize item [{}], because of [{}]", source, Exceptions2.extractMessage(e));
-            return null;
+            String message = String.format(
+                    "failed to deserialize item [%s], because of [%s]",
+                    source, Exceptions2.extractMessage(e)
+            );
+
+            if (throwError) {
+                throw new JsonDeserializeException(message, e);
+            } else {
+                log.warn(message);
+                return null;
+            }
         }
     }
 
     @Override
-    public Object deserialize(final byte[] serialized) {
-        return deserialize(serialized, Object.class);
+    public <T> T deserialize(final byte[] serialized, final Class<T> tClass) {
+        return deserialize(serialized, tClass, false);
     }
 
     @Override
-    public byte[] serialize(final Command object) {
+    public Object deserialize(final byte[] serialized) {
+        return deserialize(serialized, Object.class, false);
+    }
+
+    @Override
+    public Object deserialize(final byte[] serialized, final boolean throwError) {
+        return deserialize(serialized, Object.class, throwError);
+    }
+
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
+    }
+
+    @Override
+    public byte[] serialize(final Object object) {
         try {
             return this.objectMapper.writeValueAsBytes(object);
         } catch (JsonProcessingException e) {
@@ -59,8 +82,7 @@ public class JsonSerializerDeserializer implements Serializer<Command>, Deserial
         }
     }
 
-    private <T> Class<?> selectClassToDeserializeTo(final byte[] serialized, final Class<T> tClass) {
-        final String source = new String(serialized);
+    private <T> Class<?> selectClassToDeserializeTo(final String source, final Class<T> tClass) {
         final Matcher matcher = TYPE_EXTRACTOR_PATTERN.matcher(source);
         if (matcher.matches()) {
             String alias = matcher.group(1);

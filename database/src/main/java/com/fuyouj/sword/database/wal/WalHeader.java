@@ -8,40 +8,41 @@ import java.nio.ByteBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.thingworks.jarvis.concurrent.utils.Exceptions2;
-import com.thingworks.jarvis.persistent.utils.Bytes;
-import com.thingworks.jarvis.persistent.wal.exception.InvalidWalFileHeader;
-import com.thingworks.jarvis.persistent.wal.exception.UnableToAccessWalFile;
+import com.fuyouj.sword.database.utils.Bytes;
+import com.fuyouj.sword.database.wal.exception.InvalidWalFileHeader;
+import com.fuyouj.sword.database.wal.exception.UnableToAccessWalFile;
+import com.fuyouj.sword.scabard.Exceptions2;
 
 public class WalHeader {
     public static final int FIXED_BYTE_SIZE = 4 + 1 + 8;
     public static final byte[] CHANGE_LOG_MAGIC = "ZLOG".getBytes();
     public static final byte VERSION = 1;
-    private static final Logger LOGGER = LoggerFactory.getLogger(WalHeader.class);
-    private final long firstEntryIndex;
 
-    public WalHeader(final long firstEntryIndex) {
-        this.firstEntryIndex = firstEntryIndex;
+    private static final Logger LOGGER = LoggerFactory.getLogger(WalHeader.class);
+
+    private final long ts;
+
+    public WalHeader(final long ts) {
+        this.ts = ts;
     }
 
     public static WalHeader read(final File file, final DataInputStream reader) {
-
         try {
             byte[] magic = new byte[CHANGE_LOG_MAGIC.length];
             reader.readFully(magic);
 
             if (!Bytes.equal(magic, CHANGE_LOG_MAGIC)) {
-                throw new InvalidWalFileHeader();
+                throw new InvalidWalFileHeader("magic value invalid");
             }
 
             if (reader.readByte() != VERSION) {
-                throw new InvalidWalFileHeader();
+                throw new InvalidWalFileHeader("version invalid");
             }
 
             long entryIndex = reader.readLong();
 
             if (entryIndex <= 0) {
-                throw new InvalidWalFileHeader();
+                throw new InvalidWalFileHeader("entryIndex invalid");
             }
 
             return new WalHeader(entryIndex);
@@ -49,7 +50,7 @@ public class WalHeader {
             LOGGER.warn("Failed to read wal file [{}], SKIP; because of [{}]",
                     file.getName(),
                     Exceptions2.extractMessage(e));
-            throw new UnableToAccessWalFile(Exceptions2.extractMessage(e));
+            throw new UnableToAccessWalFile(file, Exceptions2.extractMessage(e));
         }
     }
 
@@ -58,7 +59,7 @@ public class WalHeader {
 
         buffer.put(CHANGE_LOG_MAGIC);
         buffer.put(VERSION);
-        buffer.putLong(firstEntryIndex);
+        buffer.putLong(ts);
 
         return buffer.array();
     }

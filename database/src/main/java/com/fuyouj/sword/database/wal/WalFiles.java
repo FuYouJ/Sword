@@ -2,8 +2,8 @@ package com.fuyouj.sword.database.wal;
 
 import java.util.List;
 
-import net.thingworks.jarvis.utils.function.Invoke;
-import net.thingworks.jarvis.utils.type.Lists2;
+import com.fuyouj.sword.scabard.Lists2;
+import com.fuyouj.sword.scabard.funtion.Invoke;
 
 public class WalFiles {
     private final List<WalFile> walFiles;

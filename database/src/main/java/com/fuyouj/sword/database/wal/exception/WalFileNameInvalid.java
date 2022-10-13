@@ -1,4 +1,4 @@
-package com.fuyouj.sword.database.exception;
+package com.fuyouj.sword.database.wal.exception;
 
 public class WalFileNameInvalid extends RuntimeException {
     public WalFileNameInvalid(final String filename) {

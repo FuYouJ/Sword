@@ -15,6 +15,16 @@ public interface WalManager {
         }
 
         @Override
+        public void clean(final String key) {
+
+        }
+
+        @Override
+        public long count(final String key) {
+            return 0L;
+        }
+
+        @Override
         public void fsync(final String key) {
 
         }
@@ -23,13 +33,25 @@ public interface WalManager {
         public Map<String, Iterator<Command>> readWALs() {
             return Maps2.staticEmpty();
         }
+
+        @Override
+        public long size(final String key) {
+            return 0;
+        }
     };
 
     @Atomic
     long append(Command cmd);
 
     @Atomic
+    void clean(String key);
+
+    long count(String key);
+
+    @Atomic
     void fsync(String key);
 
     Map<String, Iterator<Command>> readWALs();
+
+    long size(String key);
 }

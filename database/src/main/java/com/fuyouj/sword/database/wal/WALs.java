@@ -4,13 +4,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.fuyouj.sword.database.Deserializer;
+import com.fuyouj.sword.database.PersistentConfiguration;
 import com.fuyouj.sword.database.utils.Iterators;
 import com.fuyouj.sword.scabard.Lists2;
 
 class WALs {
-    private static final long VERY_FIRST_ENTRY_INDEX = 1L;
     private final Path walPath;
     private final List<WAL> walList;
     private final String key;
@@ -19,18 +20,48 @@ class WALs {
     WALs(final String key, final String walPath) {
         this.key = key;
         this.walPath = Path.of(walPath);
-        this.walList = new ArrayList<>();
+        this.walList = new CopyOnWriteArrayList<>();
     }
 
     private WALs(final String key, final Path walPath, final List<WAL> walList) {
         this.key = key;
         this.walPath = walPath;
-        this.walList = walList;
+        this.walList = new CopyOnWriteArrayList<>(walList);
+    }
+
+    public void clean() {
+        if (Lists2.isNullOrEmpty(walList)) {
+            return;
+        }
+
+        for (WAL wal : walList) {
+            wal.clean();
+        }
+
+        this.activeWal = null;
+        this.walList.clear();
+    }
+
+    public long size() {
+        long size = 0;
+        for (WAL wal : walList) {
+            size += wal.size();
+        }
+
+        return size;
     }
 
     long append(final EntryType entryType, final byte[] bytes) {
         this.ensureActiveWal();
         return this.activeWal.append(entryType, bytes);
+    }
+
+    long count() {
+        if (Lists2.isNullOrEmpty(walList)) {
+            return 0L;
+        }
+
+        return walList.stream().mapToLong(WAL::count).sum();
     }
 
     void fsync() {
@@ -53,14 +84,14 @@ class WALs {
         return new WALs(key, storagePath, walFiles.init());
     }
 
-    Iterator<Command> toCommandIterator(final Deserializer deserializer) {
+    Iterator<Command> toCommandIterator(final Deserializer deserializer, final PersistentConfiguration configuration) {
         if (this.walList.isEmpty()) {
             return Iterators.empty();
         }
 
-        return new Iterator<Command>() {
+        return new Iterator<>() {
             private int walCursor = 0;
-            private Iterator<Command> currentIterator = walList.get(0).toCommandIterator(deserializer);
+            private Iterator<Command> currentIterator = walList.get(0).toCommandIterator(deserializer, configuration);
 
             @Override
             public boolean hasNext() {
@@ -78,7 +109,7 @@ class WALs {
                 if (this.walCursor >= walList.size()) {
                     return false;
                 } else {
-                    currentIterator = walList.get(walCursor).toCommandIterator(deserializer);
+                    currentIterator = walList.get(walCursor).toCommandIterator(deserializer, configuration);
                 }
 
                 return hasNext();
@@ -102,15 +133,19 @@ class WALs {
     private void ensureActiveWal() {
         if (this.activeWal == null) {
             if (this.walList.isEmpty()) {
-                this.newWal(this.key, VERY_FIRST_ENTRY_INDEX);
+                this.newWal(this.key);
             } else {
                 Lists2.last(this.walList).map(w -> this.activeWal = w);
             }
         }
+
+        if (this.activeWal.isInvalid()) {
+            this.newWal(this.key);
+        }
     }
 
-    private void newWal(final String name, final long firstEntryIndex) {
-        final WAL wal = new WAL(buildAbsoluteFilename(name), firstEntryIndex);
+    private void newWal(final String name) {
+        final WAL wal = new WAL(buildAbsoluteFilename(name), System.currentTimeMillis());
         this.activeWal = wal;
         this.walList.add(wal);
     }

@@ -18,9 +18,13 @@ class EntryTypeFactory {
         EntryType found = ENTRY_TYPE_MAP.get(entryCode);
 
         if (found == null) {
-            throw new EntryTypeNotValid();
+            throw new EntryTypeNotValid(entryCode);
         }
 
         return found;
+    }
+
+    static boolean isValidEntryType(final byte entryCode) {
+        return ENTRY_TYPE_MAP.get(entryCode) != null;
     }
 }

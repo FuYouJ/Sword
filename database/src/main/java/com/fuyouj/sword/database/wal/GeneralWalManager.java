@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import com.fuyouj.sword.concurrent.runner.AtomicConsumer;
 import com.fuyouj.sword.concurrent.runner.AtomicRunner;
 import com.fuyouj.sword.database.Deserializer;
 import com.fuyouj.sword.database.PersistentConfiguration;
@@ -22,17 +23,17 @@ import com.fuyouj.sword.scabard.Lists2;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class GeneralWalManager implements WalManager {
+public class GeneralWalManager implements WalManager, AtomicConsumer<String> {
     private final PersistentConfiguration configuration;
-    private final Serializer<Command> serializer;
+    private final Serializer serializer;
     private final Deserializer deserializer;
     private final AtomicRunner<String> atomicRunner;
     private final Map<String, WALs> keyedWALs = new ConcurrentHashMap<>();
-    private WALState state = WALState.Unloaded;
+    private WALState state = WALState.UnLoaded;
 
     public GeneralWalManager(final AtomicRunner<String> atomicRunner,
                              final PersistentConfiguration configuration,
-                             final Serializer<Command> serializer,
+                             final Serializer serializer,
                              final Deserializer deserializer) {
         this.atomicRunner = atomicRunner;
         this.configuration = Optional.ofNullable(configuration).orElse(PersistentConfiguration.DEFAULT_CONFIG);
@@ -41,14 +42,42 @@ public class GeneralWalManager implements WalManager {
     }
 
     @Override
+    @Atomic
     public long append(final Command cmd) {
         if (!configuration.isPersistentEnabled()) {
             return 0;
         }
 
-        return this.atomicRunner.run(
-                this.buildAtomicKey(cmd.getKey()),
-                () -> this.select(cmd.getKey()).append(cmd.getEntryType(), this.serializer.serialize(cmd))).getResult();
+        return doAppend(cmd);
+    }
+
+    @Override
+    public String buildKey(final String atomicKey) {
+        return "GeneralWal:" + atomicKey;
+    }
+
+    @Override
+    public void clean(final String key) {
+        if (this.configuration.isPersistentEnabled()) {
+            WALs waLs = this.trySelect(key);
+            if (waLs != null) {
+                waLs.clean();
+            }
+        }
+    }
+
+    @Override
+    public long count(final String key) {
+        if (!this.configuration.isPersistentEnabled()) {
+            return 0L;
+        }
+
+        WALs waLs = this.keyedWALs.get(key);
+        if (waLs == null) {
+            return 0L;
+        }
+
+        return waLs.count();
     }
 
     @Override
@@ -56,6 +85,11 @@ public class GeneralWalManager implements WalManager {
         if (this.configuration.isPersistentEnabled()) {
             this.select(key).fsync();
         }
+    }
+
+    @Override
+    public AtomicRunner<String> getRunner() {
+        return this.atomicRunner;
     }
 
     public Map<String, Iterator<Command>> readWALs() {
@@ -66,13 +100,33 @@ public class GeneralWalManager implements WalManager {
         return this.loadCommands();
     }
 
+    @Override
+    public long size(final String key) {
+        return this.select(key).size();
+    }
+
     private String buildAtomicKey(final String key) {
-        return "WalManager:" + key;
+        return key;
+    }
+
+    private long doAppend(final Command cmd) {
+        final WALs waLs = this.select(cmd.getKey());
+        final long appended = waLs.append(cmd.getEntryType(), this.serializer.serialize(cmd));
+        if (configuration.isForceFsync()) {
+            waLs.fsync();
+        }
+        return appended;
+    }
+
+    private void ensureStoragePathExists(final Path storagePath) throws IOException {
+        if (!Files.exists(storagePath)) {
+            Files.createDirectories(storagePath);
+        }
     }
 
     @Atomic
     private void initWALs() {
-        this.atomicRunner.run("Init:Wal", () -> {
+        this.atomicRun("init", () -> {
             if (this.state == WALState.Loaded) {
                 return null;
             }
@@ -80,7 +134,12 @@ public class GeneralWalManager implements WalManager {
             final Path storagePath = Path.of(this.configuration.getStoragePath());
 
             try {
-                List<WalFile> walFiles = Files.list(storagePath).map(WalFile::new).collect(Collectors.toList());
+                this.ensureStoragePathExists(storagePath);
+
+                List<WalFile> walFiles = Files.list(storagePath)
+                        .map(WalFile::new)
+                        .filter(WalFile::isValid)
+                        .collect(Collectors.toList());
                 Map<String, List<WalFile>> walFileGroupedByKey = Lists2.group(walFiles, WalFile::getKey);
 
                 walFileGroupedByKey.forEach((key, files) -> {
@@ -93,13 +152,13 @@ public class GeneralWalManager implements WalManager {
             }
 
             return null;
-        }).getOrThrow();
+        });
     }
 
     private Map<String, Iterator<Command>> loadCommands() {
         Map<String, Iterator<Command>> commands = new HashMap<>();
 
-        keyedWALs.forEach((key, waLs) -> commands.put(key, waLs.toCommandIterator(this.deserializer)));
+        keyedWALs.forEach((key, waLs) -> commands.put(key, waLs.toCommandIterator(this.deserializer, this.configuration)));
 
         return commands;
     }
@@ -108,7 +167,8 @@ public class GeneralWalManager implements WalManager {
         return this.keyedWALs.computeIfAbsent(key, walKey -> new WALs(walKey, this.configuration.getStoragePath()));
     }
 
-    private enum WALState {
-        Unloaded, Loaded
+    private WALs trySelect(final String key) {
+        return this.keyedWALs.get(key);
     }
+
 }
